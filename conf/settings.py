@@ -7,3 +7,4 @@ class Settings():
         self.bg_color = (70, 130, 180)
         self.ship_width = 70
         self.ship_height = 70
+        self.ship_speed_factor = 3
