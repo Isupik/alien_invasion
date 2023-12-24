@@ -30,3 +30,7 @@ class Ship():
     def blitme(self):
         """Рисует корабль в текущей позиции"""
         self.screen.blit(self.image, self.rect)
+
+    def center_ship(self):
+        """Размещвет корабль в центре нижней стороны"""
+        self.center = self.screen_rect.centerx
