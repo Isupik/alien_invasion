@@ -1,27 +1,27 @@
 import sys
 import pygame
+
+import button_types
 from bullet import Bullet
 from alien import Alien
 from time import sleep
 
 
-
-
-def check_events(ai_settings, screen, stats, button, ship, bullets):
+def check_events(ai_settings, screen, stats, buttons, ship, aliens, bullets):
     """Обрабатывается нажатие клавиш и событий мышки"""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-            check_keydown_events(event, ai_settings, screen, ship, bullets, stats, button)
+            check_keydown_events(event, ai_settings, screen, ship, bullets, stats, buttons)
         elif event.type == pygame.KEYUP:
             check_keyup_evehts(event, ship)
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            check_play_button(stats, button, mouse_x, mouse_y)
+            check_play_button(ai_settings, screen, stats, buttons, ship, aliens, bullets, mouse_x, mouse_y)
 
 
-def check_keydown_events(event, ai_settings, screen, ship, bullets, stats, button):
+def check_keydown_events(event, ai_settings, screen, ship, bullets, stats, buttons):
     if event.key == pygame.K_RIGHT:
         ship.moving_right = True
     elif event.key == pygame.K_LEFT:
@@ -30,7 +30,10 @@ def check_keydown_events(event, ai_settings, screen, ship, bullets, stats, butto
         fire_bullet(ai_settings, screen, ship, bullets)
     elif event.key == pygame.K_ESCAPE:
         stats.game_active = False
-        button.prep_msg("Продолжить")
+        pygame.mouse.set_visible(True)
+        change_visability(buttons, types=[button_types.button_type.RESUME])
+        # button.prep_msg("Продолжить")
+        # button.type = button_types.button_type.RESUME
 
 
 def fire_bullet(ai_settings, screen, ship, bullets):
@@ -46,7 +49,7 @@ def check_keyup_evehts(event, ship):
         ship.moving_left = False
 
 
-def update_screen(ai_settings, screen, stats, ship, aliens, bullets, play_button):
+def update_screen(ai_settings, screen, stats, ship, aliens, bullets, buttons):
     """Обновляет изображения на экране и отображает новый экран"""
     screen.fill(ai_settings.bg_color)
     for bullet in bullets.sprites():
@@ -55,7 +58,8 @@ def update_screen(ai_settings, screen, stats, ship, aliens, bullets, play_button
     aliens.draw(screen)
     # Кнопка Play отображается в том случае, если игра неактивна
     if not stats.game_active:
-        play_button.draw_button()
+        for but in filter(lambda elem: elem.visability, buttons):
+            but.draw_button()
     # Отображение последнего прорисованного экрана
     pygame.display.flip()
 
@@ -162,23 +166,20 @@ def change_fleet_direction(ai_settings, aliens):
 def ship_hit(ai_settings, stats, screen, ship, aliens, bullets):
     """Обрабатывает столкновение корабля с пришельцем"""
     if stats.ships_left > 0:
-
         # Уменьшение ship_left
         stats.ships_left -= 1
-
         # Очистка списков пришельцев и пуль
         aliens.empty()
         bullets.empty()
-
         # Создание нового флота и размещение коробля в центре
         create_fleet(ai_settings, screen, ship, aliens)
         ship.center_ship()
-
         # Пауза
         sleep(1)
 
     else:
         stats.game_active = False
+        pygame.mouse.set_visible(True)
 
 
 def check_aliens_bottom(ai_settings, stats, screen, ship, aliens, bullets):
@@ -190,7 +191,30 @@ def check_aliens_bottom(ai_settings, stats, screen, ship, aliens, bullets):
             ship_hit(ai_settings, stats, screen, ship, aliens, bullets)
             break
 
-def check_play_button(stats, play_button, mouse_x, mouse_y):
-    """"""
-    if play_button.rect.collidepoint(mouse_x, mouse_y):
-        stats.game_active = True
+
+def check_play_button(ai_settings, screen, stats, buttons, ship, aliens, bullets, mouse_x, mouse_y):
+    """Запускает новую игру при нажатии кнопки Играть"""
+    for but in filter(lambda elem: elem.visability, buttons):
+        button_clicked = but.rect.collidepoint(mouse_x, mouse_y)
+        if button_clicked and not stats.game_active and but.type == button_types.button_type.PLAY:
+            # Указатель мыши скрывается
+            pygame.mouse.set_visible(False)
+            # Сброс игровой статистики
+            stats.reset_stats()
+            stats.game_active = True
+            # Очистка списков пришельцев и пуль
+            aliens.empty()
+            bullets.empty()
+            # Создание нового флота и резмещение коробля в центре
+            create_fleet(ai_settings, screen, ship, aliens)
+            ship.center_ship()
+        elif button_clicked and not stats.game_active and but.type == button_types.button_type.RESUME:
+            pygame.mouse.set_visible(False)
+            stats.game_active = True
+
+def change_visability(buttons, types):
+    for but in buttons:
+        if but.type in types:
+            but.visability = True
+        else:
+            but.visability = False
