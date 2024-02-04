@@ -8,6 +8,7 @@ from game_stats import GameStats
 from button import Button
 from ship import Ship
 from alien import Alien
+from scoreboard import Scoreboard
 import game_functions as gf
 
 
@@ -19,7 +20,8 @@ def run_game():
     pygame.display.set_caption('Alien Invasion')
     # button = Button(screen, 'Играть', button_types.button_type.PLAY)
     buttons = Button(screen).get_list_buttons()
-    stats = GameStats(ai_settings)  # Создание экземпляра для хранения игровой статистики
+    stats = GameStats(ai_settings)
+    sb = Scoreboard(ai_settings, screen, stats)
     ship = Ship(ai_settings=ai_settings, screen=screen)
     bullets = Group()
     alien = Alien(ai_settings=ai_settings, screen=screen)
@@ -34,8 +36,8 @@ def run_game():
         if stats.game_active:
             ship.update()
             bullets.update()
-            gf.update_bullets(ai_settings, screen, ship, aliens, bullets)
+            gf.update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets)
             gf.update_aliens(ai_settings, stats, screen, ship, aliens, bullets)
-        gf.update_screen(ai_settings, screen, stats, ship, aliens, bullets, buttons)
+        gf.update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, buttons)
 
 run_game()
